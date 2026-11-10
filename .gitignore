@@ -1,0 +1,10 @@
+build*/
+.cxx/
+.gradle/
+*.apk
+*.aab
+local.properties
+.idea/
+captures/
+/out/
+*.ppm
