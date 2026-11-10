@@ -104,6 +104,41 @@ static void testTimers() {
     CHECK(tm.takeReleased().size() == 2);
 }
 
+#ifdef AETHER_AUDIO_MINIAUDIO
+// In-memory file system holding one generated WAV, to exercise the real miniaudio decode path without a sound card.
+struct WavFs : IFileSystem {
+    std::vector<uint8_t> wav;
+    WavFs() {
+        const int n = 800;  // 0.1 s of 8 kHz mono 16-bit
+        auto u32 = [&](uint32_t v) { for (int i = 0; i < 4; i++) wav.push_back((uint8_t)(v >> (8 * i))); };
+        auto u16 = [&](uint16_t v) { wav.push_back((uint8_t)v); wav.push_back((uint8_t)(v >> 8)); };
+        for (char c : std::string("RIFF")) wav.push_back((uint8_t)c);
+        u32(36 + n * 2);
+        for (char c : std::string("WAVEfmt ")) wav.push_back((uint8_t)c);
+        u32(16); u16(1); u16(1); u32(8000); u32(16000); u16(2); u16(16);
+        for (char c : std::string("data")) wav.push_back((uint8_t)c);
+        u32(n * 2);
+        for (int i = 0; i < n; i++) u16((uint16_t)(i % 40 < 20 ? 8000 : -8000));
+    }
+    bool readFile(const std::string& p, std::vector<uint8_t>& out) override { if (p != "a.wav") return false; out = wav; return true; }
+    bool exists(const std::string& p) override { return p == "a.wav"; }
+};
+
+static void testMiniaudio() {
+    WavFs fs;
+    std::unique_ptr<IAudio> a(createMiniaudioAudio(true));
+    CHECK(a->init(&fs));
+    uint32_t h = a->playSound("a.wav", 1.f, 1.f, false);
+    CHECK(h != 0 && a->activeSounds() == 1);
+    CHECK(a->playSound("missing.wav", 1.f, 1.f, false) == 0);
+    a->setVolume("sfx", 0.5f);
+    CHECK(a->volume("sfx") == 0.5f);
+    a->stopSound(h);
+    CHECK(a->activeSounds() == 0);
+    a->shutdown();
+}
+#endif
+
 static std::unique_ptr<Engine> makeEngine(const char* dir) {
     Services s;
     s.platform = std::make_unique<HeadlessPlatform>(640, 360);
@@ -131,6 +166,9 @@ int main() {
     testPhysics();
     testTimers();
     testEngineBoot();
+#ifdef AETHER_AUDIO_MINIAUDIO
+    testMiniaudio();
+#endif
     std::printf("%d checks, %d failed\n", g_checks, g_failed);
     return g_failed ? 1 : 0;
 }

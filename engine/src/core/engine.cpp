@@ -159,7 +159,7 @@ void Engine::onSurfaceLost() {
     font.setTexture(0);
     // Nodes keep their path; textures are re-resolved lazily after the surface returns.
     tree.traverse([](Node& n) { n.texture = 0; });
-    if (svc.renderer) svc.renderer->shutdown();
+    if (svc.renderer) svc.renderer->contextLost();
 }
 
 void Engine::onSurfaceReady() {

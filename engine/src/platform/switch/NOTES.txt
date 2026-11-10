@@ -1,0 +1,17 @@
+Nintendo Switch backend – design notes (not implemented yet). This file is a placeholder, not user docs.
+
+Toolchain: devkitPro devkitA64 + libnx (homebrew); official SDK work happens outside this repo.
+The engine core already has everything it needs behind these interfaces; implement them here:
+
+  SwitchPlatform : IPlatform   - libnx hid (padInitializeDefault/padUpdate -> Event::PadButton*/PadAxisMoved,
+                                 hidInitializeTouchScreen -> Event::Touch*), appletMainLoop for Quit/Pause,
+                                 armGetSystemTick for timeSeconds, eglSwapBuffers in present(),
+                                 handheld 1280x720 / docked 1920x1080 reported through width()/height().
+  RomfsFileSystem : IFileSystem - romfsInit(); read game assets from romfs:/game/ (same layout as the APK's assets/game).
+  SaveStorage : IStorage        - fsdev mount of the save data; DirStorage works once the mount point exists.
+  Renderer                      - GLESRenderer (mesa EGL/GLES3 via libnx nouveau) is reused unchanged.
+  Audio                         - miniaudio is not available on Switch; implement IAudio with audren, or keep NullAudio first.
+
+Gamepad buttons are positional (South/East/West/North) so Switch's swapped A/B needs only a table in the platform.
+Build with a separate toolchain CMake file (-DCMAKE_TOOLCHAIN_FILE=.../devkitA64.cmake) and AETHER_BUILD_TOOLS=OFF.
+Rules: no <android/...>, JNI or Java types in engine/; Lua is compiled as C++ (exceptions must be enabled in the Switch build).

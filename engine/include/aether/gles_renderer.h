@@ -11,6 +11,7 @@ public:
     const char* name() const override { return "gles3"; }
     bool init() override;
     void shutdown() override;
+    void contextLost() override { program_ = vbo_ = ibo_ = vao_ = whiteTex_ = 0; ready_ = false; }
     void setView(int fbW, int fbH, int vpX, int vpY, int vpW, int vpH, float virtW, float virtH) override;
     TextureId createTexture(int w, int h, const uint8_t* rgba, bool smooth) override;
     void destroyTexture(TextureId id) override;

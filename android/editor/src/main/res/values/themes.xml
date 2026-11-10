@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Aether" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#101319</item>
+        <item name="android:statusBarColor">#101319</item>
+        <item name="android:navigationBarColor">#101319</item>
+        <item name="android:textColor">#E6E9EF</item>
+    </style>
+    <style name="Theme.Aether.Play" parent="Theme.Aether">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

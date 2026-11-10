@@ -44,7 +44,7 @@ cd build && ctest --output-on-failure          # C++ unit tests + Lua API tests 
 ./build/tools/aether_run/aether_run games/bullet_heaven --test tests/smoke.lua --frames 2400 --screenshot out.ppm
 ```
 Sanitizers: configure a second dir with `-DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"` (and the linker flag) – keep it clean.
-Android (needs SDK+NDK, built in CI `.github/workflows/android.yml`): `cd android && ./gradlew :editor:assembleDebug :player:assembleDebug -PgameDir=../games/bullet_heaven`.
+Android (needs SDK+NDK, built in CI `.github/workflows/android.yml`): `cd android && ./gradlew :editor:assembleDebug :player:assembleDebug -PgameDir=../../games/bullet_heaven`.
 
 ## Implementation status
 - [x] Core: logging, file systems, timers, resources (PNG/JPG/BMP/TGA via stb), game loop, scene switching, config (`game.lua`)
@@ -54,11 +54,11 @@ Android (needs SDK+NDK, built in CI `.github/workflows/android.yml`): `cd androi
 - [x] Animation: grid spritesheet animations, loop/once, `on_animation_finished`
 - [x] Input: actions, key/gamepad/axis bindings, touch, virtual stick/buttons, test injection
 - [x] Physics/collisions: see above
-- [x] Audio: miniaudio backend (wav/mp3/flac, sfx/music buses) + null backend (miniaudio path compiled only with `AETHER_AUDIO_MINIAUDIO`)
+- [x] Audio: miniaudio backend (wav/mp3/flac, sfx/music buses; verified on desktop with `-DAETHER_AUDIO_MINIAUDIO=ON`, device-less decode test) + null backend
 - [x] Timers, tweens/easing, save system (`aether.save/load`, sandboxed deserialiser), Lua test harness
-- [x] Lua scripting API + guide, bullet-heaven example game, automated tests
-- [ ] Android editor/player/JNI (see `android/`): written but **not yet compiled or run on a device** (no SDK/NDK in the dev sandbox)
-- [ ] Switch backend (design only)
+- [x] Lua scripting API + guide, bullet-heaven example game, platformer test game, automated tests (ctest: C++ unit, Lua API, platformer, bullet-heaven smoke; all ASAN/UBSAN clean)
+- [ ] Android (see `android/`): `editor` (Kotlin, plain Views: project list, text editor, Play view with console/restart/debug toggles, Run tests), `player` (NativeActivity, `hasCode=false`, assets/game/), JNI bridge, GLES3 renderer, AndroidPlatform/asset FS. **Written but never compiled or run** (no SDK/NDK/GPU in the dev sandbox) – first job on a machine with the SDK: `android.yml` CI / local gradle build, then fix whatever breaks. No syntax highlighting, no asset import UI, no APK export UI yet (export = `:player:assembleRelease -PgameDir=...`)
+- [ ] Switch backend (design only: `engine/src/platform/switch/NOTES.txt`)
 - [ ] Not started: tilemaps, particles system, text fonts beyond 5×7, scene files (scenes are Lua scripts), networking
 
 ## Codebase map
@@ -66,7 +66,7 @@ Android (needs SDK+NDK, built in CI `.github/workflows/android.yml`): `cd androi
 - `engine/src/core/` engine loop, log, filesystem, timers, resources · `scene/` · `physics/` · `input/` · `render/` (batch, software, gles, font) · `audio/`
 - `engine/src/script/` `lua_vm.*` (VM, callbacks, node handles), `bind_core.cpp` (aether.*, scene, timer, storage, test), `bind_node.cpp` (node props/methods, spawn/build),
   `bind_systems.cpp` (input, audio, physics, camera, draw), `prelude.cpp` (Lua-side: math, save, tween, test harness)
-- `engine/src/platform/` `platform_names.cpp` (key/pad names), `android/`, `switch/` (stub)
-- `tools/aether_run/` headless runner · `tests/` C++ unit tests, `tests/lua/api` Lua API tests, `tests/data` fixtures
+- `engine/src/platform/` `platform_names.cpp` (key/pad names), `android/` (AndroidPlatform, AAssetFileSystem), `switch/` (notes only)
+- `tools/aether_run/` headless runner · `tests/` C++ unit tests, `tests/lua/api` + `tests/lua/platformer` Lua tests, `tests/data` fixtures
 - `games/bullet_heaven/` example game (also an integration test) · `docs/LUA_GUIDE.md` scripting guide
-- `android/` Gradle project: `editor` (Kotlin app), `player` (NativeActivity, no Kotlin), `jni` shared native lib · `.github/workflows/` CI
+- `android/` Gradle project: `editor` (Kotlin app + `src/main/cpp` JNI lib), `player` (NativeActivity, no Kotlin) · `.github/workflows/` `ci.yml` (desktop tests+sanitizers), `android.yml` (APKs) · `games/starter` template project

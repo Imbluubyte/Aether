@@ -47,6 +47,9 @@ public:
     // Called once the platform has a valid surface/context (and again after a context loss).
     virtual bool init() = 0;
     virtual void shutdown() = 0;
+    // The GPU context was destroyed underneath us (Android surface loss): forget GPU handles without
+    // issuing GL calls. init() is called again once a new context exists.
+    virtual void contextLost() { shutdown(); }
     // Physical framebuffer size and the letterbox viewport inside it (pixels), plus virtual size.
     virtual void setView(int fbW, int fbH, int vpX, int vpY, int vpW, int vpH, float virtW, float virtH) = 0;
     virtual TextureId createTexture(int w, int h, const uint8_t* rgba, bool smooth) = 0;

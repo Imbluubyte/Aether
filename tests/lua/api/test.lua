@@ -144,6 +144,25 @@ test.run(function()
   check(sp:is_valid(), "spawn from coroutine")
   sp:destroy()
 
+  -- ---- guide recipes: health module + per-instance prop copies
+  local Health = require("scripts.health")
+  local fell, hurt = false, 0
+  local victim = aether.node.create("node")
+  victim:set_script({ on_hurt = function() hurt = hurt + 1 end, on_die = function() fell = true end })
+  Health.attach(victim, 2)
+  check(Health.damage(victim, 1) and hurt == 1, "damage applies and calls on_hurt")
+  check(not Health.damage(victim, 1), "invulnerability frames block damage")
+  Health.tick(victim, 1.0)
+  check(Health.damage(victim, 1) and fell and victim.hp == 0, "death callback")
+  victim:destroy()
+  local base = { hp = 2, speed = 50 }
+  local c = aether.copy(base)
+  c.hp = 9
+  check(base.hp == 2 and c.hp == 9, "aether.copy is independent")
+  check(aether.math.clamp(5, 0, 3) == 3 and aether.math.lerp(0, 10, 0.5) == 5, "math helpers")
+  local ax, ay = aether.math.normalize(3, 4)
+  check(math.abs(ax - 0.6) < 1e-6 and math.abs(ay - 0.8) < 1e-6, "normalize")
+
   -- ---- scene change
   aether.scene.change("scenes/other.lua")
   test.wait_frames(3)
